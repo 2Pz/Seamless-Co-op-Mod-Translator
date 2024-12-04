@@ -1,7 +1,7 @@
 
-# Seamless Co-op Mod Translator
+# Seamless Co-op Mod Manager Translator
 
-**Seamless Co-op Mod Translator** is designed to translate the *Seamless Co-op Mod Manager* into any language. The tool allows you to create new localizations or update existing ones with ease.
+**Seamless Co-op Mod Manager Translator** is designed to translate the *Seamless Co-op Mod Manager* into any language. The tool allows you to create new localizations or update existing ones with ease.
 
 ## Features
 - Create new localization files.
