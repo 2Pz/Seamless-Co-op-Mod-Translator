@@ -13,11 +13,12 @@ from deep_translator import GoogleTranslator
 def get_application_path():
     """Get the path to the application directory"""
     if getattr(sys, 'frozen', False):
-        # If the application is run as a bundle
+        # If the application is run as a bundled executable
         return os.path.dirname(sys.executable)
     else:
-        # If the application is run from a Python interpreter
+        # If the application is run from a Python script
         return os.path.dirname(os.path.abspath(__file__))
+
 
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
@@ -225,14 +226,16 @@ class TranslatorApp(QMainWindow):
         self.setMinimumSize(1200, 800)
         
         # Set application icon
-        icon_path = resource_path(os.path.join('assets', 'languages.png'))
+        icon_path = resource_path(os.path.join('assets', 'languages.ico'))  # Use the .ico file
         self.setWindowIcon(QIcon(icon_path))
+
         
         # Load reference English JSON
         try:
-            json_path = resource_path('en.json')
+            json_path = os.path.join(get_application_path(), 'en.json')
             with open(json_path, 'r', encoding='utf-8') as f:
                 self.en_data = json.load(f)
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load en.json: {str(e)}\nPath: {json_path}")
             sys.exit(1)
@@ -286,6 +289,7 @@ class TranslatorApp(QMainWindow):
         search_layout.addWidget(source_search_label)
         search_layout.addWidget(self.source_search)
         
+        
         # Target text search
         target_search_label = QLabel("Search Translation:")
         self.target_search = QLineEdit()
@@ -327,6 +331,10 @@ class TranslatorApp(QMainWindow):
         btn_layout.addWidget(self.translate_all_btn)
         btn_layout.addWidget(self.save_btn)
         controls_layout.addLayout(btn_layout)
+
+        self.missing_translations_btn = QPushButton("Show Missing Translations")
+        self.missing_translations_btn.clicked.connect(self.show_missing_translations)
+        btn_layout.addWidget(self.missing_translations_btn)
         
         # Progress bar
         self.progress_bar = QProgressBar()
@@ -370,6 +378,25 @@ class TranslatorApp(QMainWindow):
         # Status
         self.status_label = QLabel("Ready")
         main_layout.addWidget(self.status_label)
+
+    def show_missing_translations(self):
+        visible_count = 0
+        for widget in self.translation_widgets.values():
+            # Consider a translation missing or needing translation if:
+            # 1. No translation text, or
+            # 2. Explicitly marked as missing translation, or
+            # 3. Source and translation are the same (needs translation)
+            is_missing = (
+                not widget.translation_preview.text() or 
+                widget.source_preview.property('missing-translation') == True or
+                widget.source_preview.property('needs-translation') == True
+            )
+            
+            widget.setVisible(is_missing)
+            if is_missing:
+                visible_count += 1
+        
+        self.status_label.setText(f"Showing {visible_count} missing/needs translation out of {len(self.translation_widgets)} items")
     
     def apply_search_filters(self):
         """Apply search filters to show/hide translation widgets"""
